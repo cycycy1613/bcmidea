@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loan Calculator</title>
+    <style>
+        .calculator-container {
+            max-width: 500px;
+            margin: auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            text-align: center;
+        }
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+            overflow-x: auto;
+            display: block;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+        td {
+            font-size: 14px;
+            word-wrap: break-word;
+        }
+        .hidden {
+            display: none;
+        }
+        @media screen and (max-width: 768px) {
+            table, th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+            input, select, button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="calculator-container">
+    <h2>Loan Calculator</h2>
+
+    <label for="loanAmount">Enter Loanable Amount:</label>
+    <input type="number" id="loanAmount" placeholder="Enter loan amount (e.g., 1,950,000.00)">
+
+    <label for="age">Enter Your Age:</label>
+    <input type="number" id="age" min="21" max="69" placeholder="Enter your age">
+
+    <label for="financingType">Select Financing Type:</label>
+    <select id="financingType" onchange="toggleInterestInput()">
+        <option value="pagibig">Pag-IBIG Financing (6.25% Interest)</option>
+        <option value="bank">Bank Financing (Custom Interest Rate)</option>
+    </select>
+
+    <label for="interestRate" id="interestLabel" class="hidden">Enter Interest Rate (%):</label>
+    <input type="number" id="interestRate" class="hidden" step="0.01" placeholder="Enter custom interest rate">
+
+    <button onclick="calculateLoan()">Compute</button>
+
+    <table id="resultTable" class="hidden">
+        <thead>
+            <tr>
+                <th>Loan Term (Years)</th>
+                <th>Monthly Amortization</th>
+                <th>Monthly Income Required</th>
+            </tr>
+        </thead>
+        <tbody id="resultBody"></tbody>
+    </table>
+</div>
+
+<script>
+    function toggleInterestInput() {
+        const financingType = document.getElementById("financingType").value;
+        const interestInput = document.getElementById("interestRate");
+        const interestLabel = document.getElementById("interestLabel");
+
+        if (financingType === "bank") {
+            interestInput.classList.remove("hidden");
+            interestLabel.classList.remove("hidden");
+        } else {
+            interestInput.classList.add("hidden");
+            interestLabel.classList.add("hidden");
+        }
+    }
+
+    function calculateLoan() {
+        const age = parseInt(document.getElementById("age").value);
+        const loanAmount = parseFloat(document.getElementById("loanAmount").value);
+        const financingType = document.getElementById("financingType").value;
+
+        let annualInterest = 6.25 / 100; // Default Pag-IBIG rate
+        let gmiFactor = 0.35; // Default GMI Required Factor for Pag-IBIG
+        let maxLoanAge = 67; // Default loan maturity age for Pag-IBIG
+
+        if (financingType === "bank") {
+            const customInterest = parseFloat(document.getElementById("interestRate").value);
+            if (!isNaN(customInterest)) {
+                annualInterest = customInterest / 100;
+            } else {
+                alert("Please enter a valid interest rate for Bank Financing.");
+                return;
+            }
+            gmiFactor = 0.40; // Bank GMI factor
+            maxLoanAge = 69; // Loan maturity age for Bank Financing
+        }
+
+        if (isNaN(age) || isNaN(loanAmount) || age < 21 || age > maxLoanAge - 5) {
+            alert("Please enter valid inputs.");
+            return;
+        }
+
+        const maxLoanTerm = maxLoanAge - age;
+        const minLoanTerm = 5;
+        const resultBody = document.getElementById("resultBody");
+        resultBody.innerHTML = "";
+
+        for (let term = Math.min(30, maxLoanTerm); term >= minLoanTerm; term--) {
+            const monthlyInterest = annualInterest / 12;
+            const numPayments = term * 12;
+            const amortization = (loanAmount * monthlyInterest) / (1 - Math.pow(1 + monthlyInterest, -numPayments));
+            const gmiRequired = amortization / gmiFactor;
+
+            const amortizationFormatted = amortization.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            const gmiRequiredFormatted = gmiRequired.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+            const row = `<tr>
+                <td>${term} years</td>
+                <td>₱${amortizationFormatted}</td>
+                <td>₱${gmiRequiredFormatted}</td>
+            </tr>`;
+            resultBody.innerHTML += row;
+        }
+
+        document.getElementById("resultTable").classList.remove("hidden");
+    }
+</script>
+
+</body>
+</html>
