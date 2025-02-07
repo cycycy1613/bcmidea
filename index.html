@@ -198,14 +198,12 @@
         const resultBody = document.getElementById("resultBody");
         resultBody.innerHTML = "";
 
-        // Generate loan terms sorted by 5
         const loanTerms = [];
         if (finalLoanTerm % 5 !== 0) loanTerms.push(finalLoanTerm);
         for (let term = Math.floor(finalLoanTerm / 5) * 5; term >= minLoanTerm; term -= 5) {
             loanTerms.push(term);
         }
 
-        // Calculate and display results for each term
         loanTerms.forEach(term => {
             const monthlyInterest = annualInterest / 12;
             const numPayments = term * 12;
@@ -223,7 +221,6 @@
             resultBody.innerHTML += row;
         });
 
-        // Display input summary
         const inputSummary = document.getElementById("inputSummary");
         inputSummary.innerHTML = `
             <tr><td>Name</td><td>${name}</td></tr>
@@ -255,11 +252,11 @@
         const resultSection = document.getElementById("resultSection");
         html2canvas(resultSection, {
             backgroundColor: "#ffffff",
-            scale: 2,
+            scale: 4, // Higher scale for enhanced quality
         }).then(canvas => {
             const link = document.createElement("a");
             link.download = "loan_summary.jpeg";
-            link.href = canvas.toDataURL("image/jpeg");
+            link.href = canvas.toDataURL("image/jpeg", 1.0); // Full quality image
             link.click();
         });
     }
