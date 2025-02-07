@@ -50,6 +50,9 @@
             font-size: 14px;
             word-wrap: break-word;
         }
+        .details-column {
+            width: 70%; /* Extend column width */
+        }
         .hidden {
             display: none;
         }
@@ -69,24 +72,44 @@
 <div class="calculator-container">
     <h2>Loan Calculator</h2>
 
-    <label for="loanAmount">Enter Loanable Amount:</label>
-    <input type="number" id="loanAmount" placeholder="Enter loan amount (e.g., 1,950,000.00)">
+    <div id="inputFields">
+        <label for="name">Enter Your Name:</label>
+        <input type="text" id="name" placeholder="Enter your name">
 
-    <label for="age">Enter Your Age:</label>
-    <input type="number" id="age" min="21" max="69" placeholder="Enter your age">
+        <label for="loanAmount">Enter Loanable Amount:</label>
+        <input type="number" id="loanAmount" placeholder="Enter loan amount (e.g., 1,950,000.00)">
 
-    <label for="financingType">Select Financing Type:</label>
-    <select id="financingType" onchange="toggleInterestInput()">
-        <option value="pagibig">Pag-IBIG Financing (6.25% Interest)</option>
-        <option value="bank">Bank Financing (Custom Interest Rate)</option>
-    </select>
+        <label for="age">Enter Your Age:</label>
+        <input type="number" id="age" min="21" max="69" placeholder="Enter your age">
 
-    <label for="interestRate" id="interestLabel" class="hidden">Enter Interest Rate (%):</label>
-    <input type="number" id="interestRate" class="hidden" step="0.01" placeholder="Enter custom interest rate">
+        <label for="financingType">Select Financing Type:</label>
+        <select id="financingType" onchange="toggleInputs()">
+            <option value="pagibig">Pag-IBIG Financing (6.25% Interest)</option>
+            <option value="bank">Bank Financing (Custom Interest Rate)</option>
+            <option value="inhouse">In-House Financing (10.5% Interest)</option>
+        </select>
 
-    <button onclick="calculateLoan()">Compute</button>
+        <label for="interestRate" id="interestLabel" class="hidden">Enter Interest Rate (%):</label>
+        <input type="number" id="interestRate" class="hidden" step="0.01" placeholder="Enter custom interest rate">
+
+        <label for="bankLoanTerm" id="bankLoanTermLabel" class="hidden">Select Bank Max Loan Term:</label>
+        <select id="bankLoanTerm" class="hidden">
+            <option value="20">20 years</option>
+            <option value="25">25 years</option>
+            <option value="30">30 years</option>
+        </select>
+    </div>
+
+    <button id="computeButton" onclick="calculateLoan()">Compute</button>
 
     <table id="resultTable" class="hidden">
+        <thead>
+            <tr>
+                <th>Category</th>
+                <th class="details-column">Details</th>
+            </tr>
+        </thead>
+        <tbody id="inputSummary"></tbody>
         <thead>
             <tr>
                 <th>Loan Term (Years)</th>
@@ -96,55 +119,82 @@
         </thead>
         <tbody id="resultBody"></tbody>
     </table>
+
+    <button id="resetButton" class="hidden" onclick="resetCalculator()">Reset</button>
 </div>
 
 <script>
-    function toggleInterestInput() {
+    function toggleInputs() {
         const financingType = document.getElementById("financingType").value;
         const interestInput = document.getElementById("interestRate");
         const interestLabel = document.getElementById("interestLabel");
+        const bankLoanTermInput = document.getElementById("bankLoanTerm");
+        const bankLoanTermLabel = document.getElementById("bankLoanTermLabel");
 
         if (financingType === "bank") {
             interestInput.classList.remove("hidden");
             interestLabel.classList.remove("hidden");
+            bankLoanTermInput.classList.remove("hidden");
+            bankLoanTermLabel.classList.remove("hidden");
         } else {
             interestInput.classList.add("hidden");
             interestLabel.classList.add("hidden");
+            bankLoanTermInput.classList.add("hidden");
+            bankLoanTermLabel.classList.add("hidden");
         }
     }
 
     function calculateLoan() {
+        const name = document.getElementById("name").value.trim();
         const age = parseInt(document.getElementById("age").value);
         const loanAmount = parseFloat(document.getElementById("loanAmount").value);
         const financingType = document.getElementById("financingType").value;
 
-        let annualInterest = 6.25 / 100; // Default Pag-IBIG rate
-        let gmiFactor = 0.35; // Default GMI Required Factor for Pag-IBIG
-        let maxLoanAge = 67; // Default loan maturity age for Pag-IBIG
+        let annualInterest;
+        let gmiFactor;
+        let maxLoanTerm;
+        let maxLoanAge;
+        let displayedInterestRate;
 
-        if (financingType === "bank") {
+        if (financingType === "pagibig") {
+            annualInterest = 6.25 / 100;
+            gmiFactor = 0.35;
+            maxLoanTerm = 30;
+            maxLoanAge = 67;
+            displayedInterestRate = "6.25%";
+        } else if (financingType === "bank") {
             const customInterest = parseFloat(document.getElementById("interestRate").value);
             if (!isNaN(customInterest)) {
                 annualInterest = customInterest / 100;
+                displayedInterestRate = `${customInterest.toFixed(2)}%`;
             } else {
                 alert("Please enter a valid interest rate for Bank Financing.");
                 return;
             }
-            gmiFactor = 0.40; // Bank GMI factor
-            maxLoanAge = 69; // Loan maturity age for Bank Financing
+            gmiFactor = 0.40;
+            maxLoanTerm = parseInt(document.getElementById("bankLoanTerm").value);
+            maxLoanAge = 69;
+        } else if (financingType === "inhouse") {
+            annualInterest = 10.5 / 100;
+            gmiFactor = 0.40;
+            maxLoanTerm = 25;
+            maxLoanAge = 69;
+            displayedInterestRate = "10.5%";
         }
 
-        if (isNaN(age) || isNaN(loanAmount) || age < 21 || age > maxLoanAge - 5) {
-            alert("Please enter valid inputs.");
+        if (!name || isNaN(age) || isNaN(loanAmount) || age < 21 || age > maxLoanAge - 5) {
+            alert("Please fill all fields correctly.");
             return;
         }
 
-        const maxLoanTerm = maxLoanAge - age;
+        const maxPossibleTerm = maxLoanAge - age;
+        const finalLoanTerm = Math.min(maxLoanTerm, maxPossibleTerm);
         const minLoanTerm = 5;
+
         const resultBody = document.getElementById("resultBody");
         resultBody.innerHTML = "";
 
-        for (let term = Math.min(30, maxLoanTerm); term >= minLoanTerm; term--) {
+        for (let term = finalLoanTerm; term >= minLoanTerm; term--) {
             const monthlyInterest = annualInterest / 12;
             const numPayments = term * 12;
             const amortization = (loanAmount * monthlyInterest) / (1 - Math.pow(1 + monthlyInterest, -numPayments));
@@ -161,7 +211,29 @@
             resultBody.innerHTML += row;
         }
 
+        const inputSummary = document.getElementById("inputSummary");
+        inputSummary.innerHTML = `
+            <tr><td>Name</td><td>${name}</td></tr>
+            <tr><td>Loanable Amount</td><td>₱${loanAmount.toLocaleString()}</td></tr>
+            <tr><td>Age</td><td>${age} years old</td></tr>
+            <tr><td>Financing Type & Rate</td><td>${financingType === "pagibig" ? 
+                "Pag-IBIG (" + displayedInterestRate + ")" : financingType === "bank" ? 
+                "Bank (" + displayedInterestRate + ")" : "In-House (" + displayedInterestRate + ")"}</td></tr>
+        `;
+
+        document.getElementById("inputFields").classList.add("hidden");
+        document.getElementById("computeButton").classList.add("hidden");
+        document.getElementById("resetButton").classList.remove("hidden");
         document.getElementById("resultTable").classList.remove("hidden");
+    }
+
+    function resetCalculator() {
+        document.getElementById("inputFields").classList.remove("hidden");
+        document.getElementById("computeButton").classList.remove("hidden");
+        document.getElementById("resetButton").classList.add("hidden");
+        document.getElementById("resultTable").classList.add("hidden");
+        document.getElementById("resultBody").innerHTML = "";
+        document.getElementById("inputSummary").innerHTML = "";
     }
 </script>
 
