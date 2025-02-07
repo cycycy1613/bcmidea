@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Loan Calculator</title>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
     <style>
         .calculator-container {
             max-width: 500px;
@@ -51,7 +52,7 @@
             word-wrap: break-word;
         }
         .details-column {
-            width: 70%; /* Extend column width */
+            width: 70%;
         }
         .hidden {
             display: none;
@@ -102,24 +103,27 @@
 
     <button id="computeButton" onclick="calculateLoan()">Compute</button>
 
-    <table id="resultTable" class="hidden">
-        <thead>
-            <tr>
-                <th>Category</th>
-                <th class="details-column">Details</th>
-            </tr>
-        </thead>
-        <tbody id="inputSummary"></tbody>
-        <thead>
-            <tr>
-                <th>Loan Term (Years)</th>
-                <th>Monthly Amortization</th>
-                <th>Monthly Income Required</th>
-            </tr>
-        </thead>
-        <tbody id="resultBody"></tbody>
-    </table>
+    <div id="resultSection" class="hidden">
+        <table id="resultTable">
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th class="details-column">Details</th>
+                </tr>
+            </thead>
+            <tbody id="inputSummary"></tbody>
+            <thead>
+                <tr>
+                    <th>Loan Term (Years)</th>
+                    <th>Monthly Amortization</th>
+                    <th>Monthly Income Required</th>
+                </tr>
+            </thead>
+            <tbody id="resultBody"></tbody>
+        </table>
+    </div>
 
+    <button id="saveButton" class="hidden" onclick="saveAsImage()">Save as Image</button>
     <button id="resetButton" class="hidden" onclick="resetCalculator()">Reset</button>
 </div>
 
@@ -194,7 +198,15 @@
         const resultBody = document.getElementById("resultBody");
         resultBody.innerHTML = "";
 
-        for (let term = finalLoanTerm; term >= minLoanTerm; term--) {
+        // Generate loan terms sorted by 5
+        const loanTerms = [];
+        if (finalLoanTerm % 5 !== 0) loanTerms.push(finalLoanTerm);
+        for (let term = Math.floor(finalLoanTerm / 5) * 5; term >= minLoanTerm; term -= 5) {
+            loanTerms.push(term);
+        }
+
+        // Calculate and display results for each term
+        loanTerms.forEach(term => {
             const monthlyInterest = annualInterest / 12;
             const numPayments = term * 12;
             const amortization = (loanAmount * monthlyInterest) / (1 - Math.pow(1 + monthlyInterest, -numPayments));
@@ -209,8 +221,9 @@
                 <td>₱${gmiRequiredFormatted}</td>
             </tr>`;
             resultBody.innerHTML += row;
-        }
+        });
 
+        // Display input summary
         const inputSummary = document.getElementById("inputSummary");
         inputSummary.innerHTML = `
             <tr><td>Name</td><td>${name}</td></tr>
@@ -224,16 +237,31 @@
         document.getElementById("inputFields").classList.add("hidden");
         document.getElementById("computeButton").classList.add("hidden");
         document.getElementById("resetButton").classList.remove("hidden");
-        document.getElementById("resultTable").classList.remove("hidden");
+        document.getElementById("saveButton").classList.remove("hidden");
+        document.getElementById("resultSection").classList.remove("hidden");
     }
 
     function resetCalculator() {
         document.getElementById("inputFields").classList.remove("hidden");
         document.getElementById("computeButton").classList.remove("hidden");
         document.getElementById("resetButton").classList.add("hidden");
-        document.getElementById("resultTable").classList.add("hidden");
+        document.getElementById("saveButton").classList.add("hidden");
+        document.getElementById("resultSection").classList.add("hidden");
         document.getElementById("resultBody").innerHTML = "";
         document.getElementById("inputSummary").innerHTML = "";
+    }
+
+    function saveAsImage() {
+        const resultSection = document.getElementById("resultSection");
+        html2canvas(resultSection, {
+            backgroundColor: "#ffffff",
+            scale: 2,
+        }).then(canvas => {
+            const link = document.createElement("a");
+            link.download = "loan_summary.jpeg";
+            link.href = canvas.toDataURL("image/jpeg");
+            link.click();
+        });
     }
 </script>
 
