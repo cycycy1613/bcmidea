@@ -14,7 +14,7 @@
       color: #333;
     }
     .container {
-      max-width: 900px;
+      max-width: 700px;
       margin: 2rem auto;
       background: #fff;
       border-radius: 20px;
@@ -22,49 +22,34 @@
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
       position: relative;
     }
-    h1, h2 {
-      text-align: center;
-    }
-    .btn-primary {
-      display: block;
-      width: 100%;
-      padding: 1rem;
-      font-weight: bold;
-      background: #2563eb;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      font-size: 1rem;
-      margin-top: 1rem;
-      cursor: pointer;
-    }
-    .hide { display: none; }
-
-    .profile-section {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      margin-bottom: 1rem;
-    }
     .avatar {
-      width: 70px;
-      height: 70px;
+      width: 100px;
+      height: 100px;
       border-radius: 50%;
       background: #ccc;
+      margin: 0 auto;
+      display: block;
     }
     .info {
-      flex-grow: 1;
-      margin-left: 1rem;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    .info h2 {
+      font-weight: bold;
+      margin: 0.5rem 0;
     }
     .points-counter {
+      position: absolute;
+      top: 2rem;
+      right: 2rem;
       background: #fde047;
+      color: black;
       padding: 0.5rem 1rem;
       border-radius: 30px;
       font-weight: bold;
-      color: black;
     }
     .url-inputs {
-      margin-top: 1rem;
+      margin-top: 2rem;
     }
     .url-group {
       display: flex;
@@ -72,25 +57,85 @@
       margin-bottom: 1rem;
     }
     .url-group input {
-      flex-grow: 1;
+      flex: 1;
       padding: 0.75rem;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      margin-right: 0.5rem;
       font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      margin-right: 0.5rem;
     }
     .url-group button {
       background: #3b82f6;
       color: white;
+      border: none;
+      font-weight: bold;
       padding: 0.75rem 1rem;
       border-radius: 8px;
-      font-weight: bold;
-      border: none;
+      box-shadow: 2px 2px 0 rgba(0,0,0,0.1);
       cursor: pointer;
     }
     .logout-btn {
-      margin-top: 2rem;
+      width: 100%;
       background: #ef4444;
+      padding: 1rem;
+      margin-top: 2rem;
+      border: none;
+      color: white;
+      font-weight: bold;
+      border-radius: 10px;
+      cursor: pointer;
+    }
+    .admin-box {
+      background: #e5e7eb;
+      padding: 1rem;
+      border-radius: 15px;
+      margin-bottom: 2rem;
+    }
+    .admin-box input {
+      width: 100%;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 0.5rem;
+    }
+    .admin-box .actions {
+      text-align: right;
+    }
+    .admin-box .actions button {
+      background: #10b981;
+      color: white;
+      border: none;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+      margin-left: 0.5rem;
+    }
+    .admin-box .actions .reject {
+      background: #ef4444;
+    }
+    #loginPanel {
+      text-align: center;
+      padding: 5rem 1rem;
+    }
+    #loginPanel button {
+      padding: 1rem 2rem;
+      background: #3b82f6;
+      color: white;
+      border: none;
+      font-size: 1rem;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    @media (max-width: 600px) {
+      .url-group {
+        flex-direction: column;
+        gap: 0.5rem;
+      }
+      .points-counter {
+        position: static;
+        margin-top: 1rem;
+        float: right;
+      }
     }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
@@ -98,24 +143,28 @@
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-  <div class="container">
+  <div id="loginPanel" class="container">
     <h1>CM RE Referral System</h1>
-    <button id="loginBtn" class="btn-primary">Login with Google</button>
+    <button onclick="login()">Login with Google</button>
+  </div>
 
-    <div id="userDashboard" class="hide">
-      <div class="profile-section">
-        <div class="avatar"></div>
-        <div class="info">
-          <div id="userName" style="font-weight: bold; font-size: 1.2rem;">User</div>
-          <div id="userJoinDate">Date Joined: --</div>
-          <div id="userId">User ID: --</div>
-        </div>
-        <div class="points-counter" id="userPoints">000</div>
-      </div>
-
-      <div class="url-inputs" id="urlInputs"></div>
-      <button class="btn-primary logout-btn" onclick="firebase.auth().signOut()">Logout</button>
+  <div id="userDashboard" class="container" style="display:none;">
+    <div class="points-counter" id="userPoints">000</div>
+    <img src="https://www.svgrepo.com/show/384674/account-avatar-profile-user-11.svg" alt="Avatar" class="avatar">
+    <div class="info">
+      <h2 id="userName">Name</h2>
+      <p id="userJoinDate">Date Joined: --</p>
+      <p id="userId">User ID: --</p>
     </div>
+    <div class="url-inputs" id="urlInputs"></div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div id="adminDashboard" class="container" style="display:none;">
+    <h2>Admin Dashboard</h2>
+    <p id="totalUsers">Total Registered Users: 0</p>
+    <div id="adminSubmissions"></div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
   </div>
 
   <script>
@@ -127,67 +176,131 @@
       messagingSenderId: "675851835919",
       appId: "1:675851835919:web:9225f1800976d7818f617a"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    document.getElementById("loginBtn").onclick = () => {
+    const loginPanel = document.getElementById("loginPanel");
+    const userDashboard = document.getElementById("userDashboard");
+    const adminDashboard = document.getElementById("adminDashboard");
+
+    function login() {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider).catch(err => {
-        alert("Login error: " + err.message);
-      });
-    };
+      auth.signInWithPopup(provider);
+    }
+
+    function logout() {
+      firebase.auth().signOut();
+    }
 
     auth.onAuthStateChanged(async user => {
       if (!user) return;
-      document.getElementById("loginBtn").style.display = "none";
-      document.getElementById("userDashboard").classList.remove("hide");
+      loginPanel.style.display = "none";
 
-      const userRef = db.collection("users").doc(user.uid);
-      const snap = await userRef.get();
-      if (!snap.exists) {
-        await userRef.set({
-          name: user.displayName,
-          email: user.email,
-          dateJoined: firebase.firestore.FieldValue.serverTimestamp(),
-          points: 0
-        });
-      }
+      if (user.email === "brocyronmathew97@gmail.com") {
+        adminDashboard.style.display = "block";
+        loadAdmin();
+      } else {
+        userDashboard.style.display = "block";
+        const ref = db.collection("users").doc(user.uid);
+        const snap = await ref.get();
+        if (!snap.exists) {
+          await ref.set({
+            name: user.displayName,
+            email: user.email,
+            dateJoined: firebase.firestore.FieldValue.serverTimestamp(),
+            points: 0
+          });
+        }
 
-      const data = (await userRef.get()).data();
-      document.getElementById("userName").textContent = data.name;
-      document.getElementById("userJoinDate").textContent = "Date Joined: " + (data.dateJoined?.toDate().toDateString() || "...");
-      document.getElementById("userId").textContent = "User ID: " + user.uid;
-      document.getElementById("userPoints").textContent = String(data.points).padStart(3, "0");
+        const data = (await ref.get()).data();
+        document.getElementById("userName").textContent = data.name;
+        document.getElementById("userJoinDate").textContent = "Date Joined: " + (data.dateJoined?.toDate().toDateString() || "...");
+        document.getElementById("userId").textContent = "User ID: " + user.uid;
+        document.getElementById("userPoints").textContent = String(data.points).padStart(3, "0");
 
-      const urlContainer = document.getElementById("urlInputs");
-      urlContainer.innerHTML = "";
-      const today = new Date().toLocaleDateString();
-      const submissionRef = db.collection("submissions").doc(user.uid + "_" + today);
-      const submissionSnap = await submissionRef.get();
-      const submitted = submissionSnap.exists ? submissionSnap.data().urls.length : 0;
-
-      for (let i = 0; i < 5 - submitted; i++) {
-        const div = document.createElement("div");
-        div.className = "url-group";
-        div.innerHTML = `<input type="text" placeholder="Paste post URL"><button>SUBMIT</button>`;
-        const input = div.querySelector("input");
-        const btn = div.querySelector("button");
-        btn.onclick = async () => {
-          const val = input.value.trim();
-          if (!val) return alert("Please enter a URL.");
-          await submissionRef.set({
-            uid: user.uid,
-            urls: firebase.firestore.FieldValue.arrayUnion(val),
-            verified: []
-          }, { merge: true });
-          alert("URL submitted!");
-          location.reload();
-        };
-        urlContainer.appendChild(div);
+        const container = document.getElementById("urlInputs");
+        container.innerHTML = "";
+        for (let i = 0; i < 5; i++) {
+          const div = document.createElement("div");
+          div.className = "url-group";
+          div.innerHTML = `<input type="text" placeholder="Paste post URL"><button>SUBMIT</button>`;
+          const input = div.querySelector("input");
+          const btn = div.querySelector("button");
+          btn.onclick = async () => {
+            const val = input.value.trim();
+            if (!val) return alert("Enter a valid URL.");
+            const today = new Date().toLocaleDateString();
+            const subRef = db.collection("submissions").doc(user.uid + "_" + today);
+            await subRef.set({
+              uid: user.uid,
+              name: data.name,
+              urls: firebase.firestore.FieldValue.arrayUnion(val),
+              verified: []
+            }, { merge: true });
+            alert("URL submitted!");
+            location.reload();
+          };
+          container.appendChild(div);
+        }
       }
     });
+
+    async function loadAdmin() {
+      const subSnap = await db.collection("submissions").get();
+      const users = {};
+      document.getElementById("totalUsers").textContent = "Total Registered Users: " + subSnap.size;
+
+      const adminSubmissions = document.getElementById("adminSubmissions");
+      adminSubmissions.innerHTML = "";
+
+      subSnap.forEach(doc => {
+        const data = doc.data();
+        if (!users[data.uid]) users[data.uid] = [];
+        users[data.uid].push({ ...data, id: doc.id });
+      });
+
+      Object.keys(users).forEach(uid => {
+        users[uid].forEach(entry => {
+          const box = document.createElement("div");
+          box.className = "admin-box";
+          box.innerHTML = `<strong>${entry.name}</strong><br>`;
+          entry.urls.forEach(url => {
+            const line = document.createElement("div");
+            line.innerHTML = `
+              <input type="text" value="${url}" readonly>
+              <div class="actions">
+                <button onclick="verify('${entry.id}', '${uid}', '${url}')">✔</button>
+                <button class="reject" onclick="reject('${entry.id}', '${url}')">✖</button>
+              </div>
+            `;
+            box.appendChild(line);
+          });
+          adminSubmissions.appendChild(box);
+        });
+      });
+    }
+
+    async function verify(docId, uid, url) {
+      const subRef = db.collection("submissions").doc(docId);
+      await subRef.update({
+        verified: firebase.firestore.FieldValue.arrayUnion(url)
+      });
+      await db.collection("users").doc(uid).update({
+        points: firebase.firestore.FieldValue.increment(1)
+      });
+      alert("Verified & point added.");
+      location.reload();
+    }
+
+    async function reject(docId, url) {
+      const subRef = db.collection("submissions").doc(docId);
+      await subRef.update({
+        urls: firebase.firestore.FieldValue.arrayRemove(url)
+      });
+      alert("URL rejected.");
+      location.reload();
+    }
   </script>
 </body>
 </html>
