@@ -1,266 +1,165 @@
-<!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html><html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Loan Calculator</title>
-    <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
-    <style>
-        .calculator-container {
-            max-width: 500px;
-            margin: auto;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-            text-align: center;
-        }
-        input, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            font-size: 16px;
-            box-sizing: border-box;
-        }
-        button {
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            cursor: pointer;
-        }
-        button:hover {
-            background-color: #45a049;
-        }
-        table {
-            width: 100%;
-            margin-top: 20px;
-            border-collapse: collapse;
-            overflow-x: auto;
-            display: block;
-        }
-        table, th, td {
-            border: 1px solid #ddd;
-            padding: 10px;
-            text-align: left;
-        }
-        th {
-            background-color: #4CAF50;
-            color: white;
-        }
-        td {
-            font-size: 14px;
-            word-wrap: break-word;
-        }
-        .details-column {
-            width: 70%;
-        }
-        .hidden {
-            display: none;
-        }
-        @media screen and (max-width: 768px) {
-            table, th, td {
-                font-size: 12px;
-                padding: 8px;
-            }
-            input, select, button {
-                font-size: 14px;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CM RE Referral System</title>
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Roboto', sans-serif; background-color: #f4f4f4; margin: 0; padding: 2rem; }
+    .container { max-width: 800px; margin: auto; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+    h1, h2 { text-align: center; }
+    .hide { display: none; }
+    .login-btn { display: block; margin: auto; padding: 0.75rem 1.5rem; font-size: 1rem; background-color: #4285f4; color: white; border: none; border-radius: 6px; cursor: pointer; }
+    .profile, .admin-section, .user-section { margin-top: 2rem; }
+    .url-group { display: flex; margin-bottom: 0.5rem; }
+    .url-group input { flex: 1; padding: 0.5rem; border-radius: 6px 0 0 6px; border: 1px solid #ccc; }
+    .url-group button { padding: 0.5rem 1rem; background: #007bff; color: #fff; border: none; border-radius: 0 6px 6px 0; cursor: pointer; }
+    .admin-box { background: #ccc; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
+    .admin-url { display: flex; margin-bottom: 0.5rem; }
+    .admin-url input { flex: 1; padding: 0.4rem; margin-right: 0.5rem; border-radius: 4px; border: 1px solid #aaa; }
+    .admin-url button { border: none; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 4px; font-size: 1rem; color: white; }
+    .approve { background-color: #4CAF50; margin-right: 0.25rem; }
+    .reject { background-color: #f44336; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
 </head>
 <body>
-
-<div class="calculator-container">
-    <h2>Loan Calculator</h2>
-
-    <div id="inputFields">
-        <label for="name">Enter Your Name:</label>
-        <input type="text" id="name" placeholder="Enter your name">
-
-        <label for="loanAmount">Enter Loanable Amount:</label>
-        <input type="number" id="loanAmount" placeholder="Enter loan amount (e.g., 1,950,000.00)">
-
-        <label for="age">Enter Your Age:</label>
-        <input type="number" id="age" min="21" max="69" placeholder="Enter your age">
-
-        <label for="financingType">Select Financing Type:</label>
-        <select id="financingType" onchange="toggleInputs()">
-            <option value="pagibig">Pag-IBIG Financing (6.25% Interest)</option>
-            <option value="bank">Bank Financing (Custom Interest Rate)</option>
-            <option value="inhouse">In-House Financing (10.5% Interest)</option>
-        </select>
-
-        <label for="interestRate" id="interestLabel" class="hidden">Enter Interest Rate (%):</label>
-        <input type="number" id="interestRate" class="hidden" step="0.01" placeholder="Enter custom interest rate">
-
-        <label for="bankLoanTerm" id="bankLoanTermLabel" class="hidden">Select Bank Max Loan Term:</label>
-        <select id="bankLoanTerm" class="hidden">
-            <option value="20">20 years</option>
-            <option value="25">25 years</option>
-            <option value="30">30 years</option>
-        </select>
-    </div>
-
-    <button id="computeButton" onclick="calculateLoan()">Compute</button>
-
-    <div id="resultSection" class="hidden">
-        <table id="resultTable">
-            <thead>
-                <tr>
-                    <th>Category</th>
-                    <th class="details-column">Details</th>
-                </tr>
-            </thead>
-            <tbody id="inputSummary"></tbody>
-            <thead>
-                <tr>
-                    <th>Loan Term (Years)</th>
-                    <th>Monthly Amortization</th>
-                    <th>Monthly Income Required</th>
-                </tr>
-            </thead>
-            <tbody id="resultBody"></tbody>
-        </table>
-    </div>
-
-    <button id="saveButton" class="hidden" onclick="saveAsImage()">Save as Image</button>
-    <button id="resetButton" class="hidden" onclick="resetCalculator()">Reset</button>
+  <div class="container">
+    <h1>CM RE Referral System</h1>
+    <button id="loginBtn" class="login-btn">Login with Google</button><div id="userSection" class="user-section hide">
+  <h2>User Dashboard</h2>
+  <div id="profile"></div>
+  <div id="urlInputs"></div>
 </div>
 
-<script>
-    function toggleInputs() {
-        const financingType = document.getElementById("financingType").value;
-        const interestInput = document.getElementById("interestRate");
-        const interestLabel = document.getElementById("interestLabel");
-        const bankLoanTermInput = document.getElementById("bankLoanTerm");
-        const bankLoanTermLabel = document.getElementById("bankLoanTermLabel");
+<div id="adminSection" class="admin-section hide">
+  <h2>Admin Dashboard</h2>
+  <div id="totalUsers">Total Users: 000</div>
+  <div id="submissions"></div>
+</div>
 
-        if (financingType === "bank") {
-            interestInput.classList.remove("hidden");
-            interestLabel.classList.remove("hidden");
-            bankLoanTermInput.classList.remove("hidden");
-            bankLoanTermLabel.classList.remove("hidden");
-        } else {
-            interestInput.classList.add("hidden");
-            interestLabel.classList.add("hidden");
-            bankLoanTermInput.classList.add("hidden");
-            bankLoanTermLabel.classList.add("hidden");
-        }
-    }
+  </div>  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyBf_N0k7XsnCu-482nOwVuYFDZ7m7Q44gE",
+      authDomain: "cm-re-referrals.firebaseapp.com",
+      projectId: "cm-re-referrals",
+      storageBucket: "cm-re-referrals.appspot.com",
+      messagingSenderId: "675851835919",
+      appId: "1:675851835919:web:9225f1800976d7818f617a"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
 
-    function calculateLoan() {
-        const name = document.getElementById("name").value.trim();
-        const age = parseInt(document.getElementById("age").value);
-        const loanAmount = parseFloat(document.getElementById("loanAmount").value);
-        const financingType = document.getElementById("financingType").value;
+    document.getElementById('loginBtn').onclick = () => {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider);
+    };
 
-        let annualInterest;
-        let gmiFactor;
-        let maxLoanTerm;
-        let maxLoanAge;
-        let displayedInterestRate;
+    auth.onAuthStateChanged(async user => {
+      if (!user) return;
+      document.getElementById('loginBtn').style.display = 'none';
 
-        if (financingType === "pagibig") {
-            annualInterest = 6.25 / 100;
-            gmiFactor = 0.35;
-            maxLoanTerm = 30;
-            maxLoanAge = 67;
-            displayedInterestRate = "6.25%";
-        } else if (financingType === "bank") {
-            const customInterest = parseFloat(document.getElementById("interestRate").value);
-            if (!isNaN(customInterest)) {
-                annualInterest = customInterest / 100;
-                displayedInterestRate = `${customInterest.toFixed(2)}%`;
-            } else {
-                alert("Please enter a valid interest rate for Bank Financing.");
-                return;
-            }
-            gmiFactor = 0.40;
-            maxLoanTerm = parseInt(document.getElementById("bankLoanTerm").value);
-            maxLoanAge = 69;
-        } else if (financingType === "inhouse") {
-            annualInterest = 10.5 / 100;
-            gmiFactor = 0.40;
-            maxLoanTerm = 25;
-            maxLoanAge = 69;
-            displayedInterestRate = "10.5%";
-        }
+      if (user.email === 'brocyronmathew97@gmail.com') {
+        document.getElementById('adminSection').classList.remove('hide');
+        loadAdminDashboard();
+        return;
+      }
 
-        if (!name || isNaN(age) || isNaN(loanAmount) || age < 21 || age > maxLoanAge - 5) {
-            alert("Please fill all fields correctly.");
-            return;
-        }
+      document.getElementById('userSection').classList.remove('hide');
+      const userRef = db.collection('users').doc(user.uid);
+      const doc = await userRef.get();
+      if (!doc.exists) {
+        await userRef.set({ name: user.displayName, email: user.email, dateJoined: firebase.firestore.FieldValue.serverTimestamp(), points: 0 });
+      }
+      const userData = (await userRef.get()).data();
+      document.getElementById('profile').innerHTML = `
+        <strong>${userData.name}</strong><br>
+        Email: ${userData.email}<br>
+        Points: ${userData.points}
+      `;
+      const today = new Date().toLocaleDateString();
+      const subRef = db.collection('submissions').doc(`${user.uid}_${today}`);
+      const subDoc = await subRef.get();
+      const submitted = subDoc.exists ? subDoc.data().urls.length : 0;
+      const urlInputs = document.getElementById('urlInputs');
+      for (let i = 0; i < 5 - submitted; i++) {
+        const group = document.createElement('div');
+        group.className = 'url-group';
+        group.innerHTML = `<input type="text" placeholder="Paste FB post URL"><button>Submit</button>`;
+        const input = group.querySelector('input');
+        const btn = group.querySelector('button');
+        btn.onclick = async () => {
+          const url = input.value.trim();
+          if (!url) return alert('Please enter a URL');
+          await subRef.set({
+            uid: user.uid,
+            urls: firebase.firestore.FieldValue.arrayUnion(url),
+            dateSubmitted: firebase.firestore.FieldValue.serverTimestamp(),
+            verified: []
+          }, { merge: true });
+          alert('Submitted! Refresh to see updated slots.');
+        };
+        urlInputs.appendChild(group);
+      }
+    });
 
-        const maxPossibleTerm = maxLoanAge - age;
-        const finalLoanTerm = Math.min(maxLoanTerm, maxPossibleTerm);
-        const minLoanTerm = 5;
+    async function loadAdminDashboard() {
+      const usersSnap = await db.collection('users').get();
+      document.getElementById('totalUsers').innerText = `Total Users: ${usersSnap.size.toString().padStart(3, '0')}`;
+      const submissions = await db.collection('submissions').get();
+      const container = document.getElementById('submissions');
 
-        const resultBody = document.getElementById("resultBody");
-        resultBody.innerHTML = "";
+      for (const doc of submissions.docs) {
+        const data = doc.data();
+        const userDoc = await db.collection('users').doc(data.uid).get();
+        const name = userDoc.exists ? userDoc.data().name : 'Unknown';
 
-        const loanTerms = [];
-        if (finalLoanTerm % 5 !== 0) loanTerms.push(finalLoanTerm);
-        for (let term = Math.floor(finalLoanTerm / 5) * 5; term >= minLoanTerm; term -= 5) {
-            loanTerms.push(term);
-        }
+        const box = document.createElement('div');
+        box.className = 'admin-box';
+        box.innerHTML = `<h4>${name}</h4>`;
 
-        loanTerms.forEach(term => {
-            const monthlyInterest = annualInterest / 12;
-            const numPayments = term * 12;
-            const amortization = (loanAmount * monthlyInterest) / (1 - Math.pow(1 + monthlyInterest, -numPayments));
-            const gmiRequired = amortization / gmiFactor;
+        data.urls.forEach((url, index) => {
+          const row = document.createElement('div');
+          row.className = 'admin-url';
 
-            const amortizationFormatted = amortization.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-            const gmiRequiredFormatted = gmiRequired.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+          const input = document.createElement('input');
+          input.value = url; input.readOnly = true;
 
-            const row = `<tr>
-                <td>${term} years</td>
-                <td>₱${amortizationFormatted}</td>
-                <td>₱${gmiRequiredFormatted}</td>
-            </tr>`;
-            resultBody.innerHTML += row;
+          const approve = document.createElement('button');
+          approve.className = 'approve';
+          approve.innerText = '👍';
+          approve.onclick = async () => {
+            await db.collection('submissions').doc(doc.id).update({ [`verified.${index}`]: true });
+            await db.collection('users').doc(data.uid).update({ points: firebase.firestore.FieldValue.increment(1) });
+            row.remove(); cleanup(doc.id);
+          };
+
+          const reject = document.createElement('button');
+          reject.className = 'reject';
+          reject.innerText = '👎';
+          reject.onclick = async () => {
+            data.urls.splice(index, 1);
+            await db.collection('submissions').doc(doc.id).update({ urls: data.urls });
+            row.remove(); cleanup(doc.id);
+          };
+
+          row.appendChild(input);
+          row.appendChild(approve);
+          row.appendChild(reject);
+          box.appendChild(row);
         });
 
-        const inputSummary = document.getElementById("inputSummary");
-        inputSummary.innerHTML = `
-            <tr><td>Name</td><td>${name}</td></tr>
-            <tr><td>Loanable Amount</td><td>₱${loanAmount.toLocaleString()}</td></tr>
-            <tr><td>Age</td><td>${age} years old</td></tr>
-            <tr><td>Financing Type & Rate</td><td>${financingType === "pagibig" ? 
-                "Pag-IBIG (" + displayedInterestRate + ")" : financingType === "bank" ? 
-                "Bank (" + displayedInterestRate + ")" : "In-House (" + displayedInterestRate + ")"}</td></tr>
-        `;
-
-        document.getElementById("inputFields").classList.add("hidden");
-        document.getElementById("computeButton").classList.add("hidden");
-        document.getElementById("resetButton").classList.remove("hidden");
-        document.getElementById("saveButton").classList.remove("hidden");
-        document.getElementById("resultSection").classList.remove("hidden");
+        container.appendChild(box);
+      }
     }
 
-    function resetCalculator() {
-        document.getElementById("inputFields").classList.remove("hidden");
-        document.getElementById("computeButton").classList.remove("hidden");
-        document.getElementById("resetButton").classList.add("hidden");
-        document.getElementById("saveButton").classList.add("hidden");
-        document.getElementById("resultSection").classList.add("hidden");
-        document.getElementById("resultBody").innerHTML = "";
-        document.getElementById("inputSummary").innerHTML = "";
+    async function cleanup(docId) {
+      const ref = db.collection('submissions').doc(docId);
+      const snap = await ref.get();
+      if (snap.exists && snap.data().urls.length === 0) await ref.delete();
     }
-
-    function saveAsImage() {
-        const resultSection = document.getElementById("resultSection");
-        html2canvas(resultSection, {
-            backgroundColor: "#ffffff",
-            scale: 4, // Higher scale for enhanced quality
-        }).then(canvas => {
-            const link = document.createElement("a");
-            link.download = "loan_summary.jpeg";
-            link.href = canvas.toDataURL("image/jpeg", 1.0); // Full quality image
-            link.click();
-        });
-    }
-</script>
-
-</body>
+  </script></body>
 </html>
