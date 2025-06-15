@@ -1,25 +1,96 @@
 <!DOCTYPE html><html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>CM RE Referral System</title>
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
   <style>
-    body { font-family: 'Roboto', sans-serif; background-color: #f4f4f4; margin: 0; padding: 2rem; }
-    .container { max-width: 800px; margin: auto; background: #fff; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-    h1, h2 { text-align: center; }
+    body {
+      font-family: 'Roboto', sans-serif;
+      background: #f9fafb;
+      margin: 0;
+      padding: 0;
+    }
+    .container {
+      max-width: 800px;
+      margin: 3rem auto;
+      background: #fff;
+      border-radius: 16px;
+      padding: 2rem;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    }
+    h1, h2 {
+      text-align: center;
+    }
+    .btn-primary {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      font-size: 1rem;
+      font-weight: bold;
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      margin: 2rem 0;
+      transition: background 0.3s ease;
+    }
+    .btn-primary:hover {
+      background-color: #1d4ed8;
+    }
     .hide { display: none; }
-    .login-btn { display: block; margin: auto; padding: 0.75rem 1.5rem; font-size: 1rem; background-color: #4285f4; color: white; border: none; border-radius: 6px; cursor: pointer; }
-    .profile, .admin-section, .user-section { margin-top: 2rem; }
-    .url-group { display: flex; margin-bottom: 0.5rem; }
-    .url-group input { flex: 1; padding: 0.5rem; border-radius: 6px 0 0 6px; border: 1px solid #ccc; }
-    .url-group button { padding: 0.5rem 1rem; background: #007bff; color: #fff; border: none; border-radius: 0 6px 6px 0; cursor: pointer; }
-    .admin-box { background: #ccc; border-radius: 12px; padding: 1rem; margin-bottom: 1rem; }
-    .admin-url { display: flex; margin-bottom: 0.5rem; }
-    .admin-url input { flex: 1; padding: 0.4rem; margin-right: 0.5rem; border-radius: 4px; border: 1px solid #aaa; }
-    .admin-url button { border: none; cursor: pointer; padding: 0.4rem 0.6rem; border-radius: 4px; font-size: 1rem; color: white; }
-    .approve { background-color: #4CAF50; margin-right: 0.25rem; }
-    .reject { background-color: #f44336; }
+    .profile, .admin-section, .user-section {
+      margin-top: 2rem;
+    }
+    .url-group {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .url-group input {
+      flex: 1;
+      padding: 0.7rem;
+      font-size: 1rem;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+    .url-group button {
+      padding: 0.7rem 1.2rem;
+      background-color: #10b981;
+      color: #fff;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    .admin-box {
+      background-color: #f3f4f6;
+      border-radius: 12px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+    }
+    .admin-url {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .admin-url input {
+      flex: 1;
+      padding: 0.5rem;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    .admin-url button {
+      font-size: 1rem;
+      border: none;
+      padding: 0.5rem 0.75rem;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .approve { background-color: #22c55e; }
+    .reject { background-color: #ef4444; }
   </style>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
@@ -28,7 +99,7 @@
 <body>
   <div class="container">
     <h1>CM RE Referral System</h1>
-    <button id="loginBtn" class="login-btn">Login with Google</button><div id="userSection" class="user-section hide">
+    <button id="loginBtn" class="btn-primary">Login with Google</button><div id="userSection" class="user-section hide">
   <h2>User Dashboard</h2>
   <div id="profile"></div>
   <div id="urlInputs"></div>
@@ -55,7 +126,8 @@
 
     document.getElementById('loginBtn').onclick = () => {
       const provider = new firebase.auth.GoogleAuthProvider();
-      auth.signInWithPopup(provider);
+      firebase.auth().signInWithPopup(provider)
+        .catch(err => alert("Login failed: " + err.message));
     };
 
     auth.onAuthStateChanged(async user => {
@@ -76,10 +148,9 @@
       }
       const userData = (await userRef.get()).data();
       document.getElementById('profile').innerHTML = `
-        <strong>${userData.name}</strong><br>
-        Email: ${userData.email}<br>
-        Points: ${userData.points}
+        <p><strong>${userData.name}</strong><br>Email: ${userData.email}<br>Points: ${userData.points}</p>
       `;
+
       const today = new Date().toLocaleDateString();
       const subRef = db.collection('submissions').doc(`${user.uid}_${today}`);
       const subDoc = await subRef.get();
