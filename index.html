@@ -106,6 +106,11 @@
     }
     .approve { background: #22c55e; }
     .reject { background: #ef4444; }
+
+    @media (max-width: 768px) {
+      .url-group { flex-direction: column; }
+      .url-group button { width: 100%; }
+    }
   </style>
 </head>
 <body>
@@ -122,11 +127,11 @@
       <p>User ID: <span id="userId">UID</span></p>
     </div>
     <div id="urlInputs">
-      ${[1,2,3,4,5].map(i => `
-        <div class="url-group" id="group${i}">
-          <input type="text" placeholder="Paste post URL" id="url${i}">
-          <button onclick="submitUrl(${i})">SUBMIT</button>
-        </div>`).join('')}
+      <div class="url-group" id="group1"><input type="text" id="url1" placeholder="Paste post URL"><button onclick="submitUrl(1)">SUBMIT</button></div>
+      <div class="url-group" id="group2"><input type="text" id="url2" placeholder="Paste post URL"><button onclick="submitUrl(2)">SUBMIT</button></div>
+      <div class="url-group" id="group3"><input type="text" id="url3" placeholder="Paste post URL"><button onclick="submitUrl(3)">SUBMIT</button></div>
+      <div class="url-group" id="group4"><input type="text" id="url4" placeholder="Paste post URL"><button onclick="submitUrl(4)">SUBMIT</button></div>
+      <div class="url-group" id="group5"><input type="text" id="url5" placeholder="Paste post URL"><button onclick="submitUrl(5)">SUBMIT</button></div>
     </div>
     <div class="success-msg" id="successMsg" style="display:none">🎉 Your task is complete! Please come back tomorrow.</div>
     <button class="logout-btn" onclick="logout()">Logout</button>
@@ -146,8 +151,7 @@
       projectId: "cm-re-referrals",
       storageBucket: "cm-re-referrals.appspot.com",
       messagingSenderId: "675851835919",
-      appId: "1:675851835919:web:9225f1800976d7818f617a",
-      measurementId: "G-S4ZBGKNWD2"
+      appId: "1:675851835919:web:9225f1800976d7818f617a"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -157,14 +161,12 @@
 
     auth.onAuthStateChanged(async user => {
       if (!user) return;
-
       document.getElementById("loginPanel").style.display = "none";
 
       if (user.email === adminEmail) {
         document.getElementById("adminDashboard").style.display = "block";
         const usersSnap = await db.collection("users").get();
         document.getElementById("adminCount").textContent = usersSnap.size;
-
         const subs = await db.collection("submissions").get();
         const grouped = {};
         subs.forEach(doc => {
@@ -172,7 +174,6 @@
           if (!grouped[data.name]) grouped[data.name] = [];
           grouped[data.name].push({ id: doc.id, url: data.url });
         });
-
         const adminBox = document.getElementById("adminSubmissions");
         adminBox.innerHTML = '';
         for (const [name, urls] of Object.entries(grouped)) {
@@ -182,10 +183,10 @@
           urls.forEach(u => {
             const div = document.createElement("div");
             div.className = "admin-url";
-            div.innerHTML = \`
-              <input value="\${u.url}" readonly>
-              <button class="approve" onclick="approve('\${u.id}')">✔</button>
-              <button class="reject" onclick="reject('\${u.id}', this)">✘</button>\`;
+            div.innerHTML = `
+              <input value="${u.url}" readonly>
+              <button class="approve" onclick="approve('${u.id}')">✔</button>
+              <button class="reject" onclick="reject('${u.id}', this)">✘</button>`;
             box.appendChild(div);
           });
           adminBox.appendChild(box);
@@ -195,11 +196,9 @@
         document.getElementById("userName").textContent = user.displayName;
         document.getElementById("userId").textContent = user.uid;
         document.getElementById("userJoin").textContent = "Date Joined: " + new Date().toDateString();
-
         const ref = db.collection("users").doc(user.uid);
         const snap = await ref.get();
         if (!snap.exists) await ref.set({ name: user.displayName, email: user.email });
-
         const total = await db.collection("users").get();
         document.getElementById("points").textContent = total.size.toString().padStart(3, '0');
       }
@@ -233,7 +232,6 @@
     }
 
     function approve(id) {
-      // Increase points if needed
       db.collection("submissions").doc(id).delete();
     }
 
